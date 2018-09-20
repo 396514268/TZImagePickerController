@@ -201,7 +201,7 @@ static CGFloat itemMargin = 5;
     [_previewButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateDisabled];
     _previewButton.enabled = tzImagePickerVc.selectedModels.count;
     
-    if (tzImagePickerVc.allowPickingOriginalPhoto) {
+    if (tzImagePickerVc.allowPickingOriginalPhoto && !tzImagePickerVc.allowPickingBurnPhoto) {
         _originalPhotoButton = [UIButton buttonWithType:UIButtonTypeCustom];
         _originalPhotoButton.imageEdgeInsets = UIEdgeInsetsMake(0, -10, 0, 0);
         [_originalPhotoButton addTarget:self action:@selector(originalPhotoButtonClick) forControlEvents:UIControlEventTouchUpInside];
@@ -259,7 +259,6 @@ static CGFloat itemMargin = 5;
     [_bottomToolBar addSubview:_originalPhotoButton];
     [self.view addSubview:_bottomToolBar];
     [_originalPhotoButton addSubview:_originalPhotoLabel];
-    
     if (tzImagePickerVc.photoPickerPageUIConfigBlock) {
         tzImagePickerVc.photoPickerPageUIConfigBlock(_collectionView, _bottomToolBar, _previewButton, _originalPhotoButton, _originalPhotoLabel, _doneButton, _numberImageView, _numberLabel, _divideLine);
     }
@@ -389,6 +388,8 @@ static CGFloat itemMargin = 5;
                     }
                     [photos replaceObjectAtIndex:i withObject:photo];
                 }
+                [info setValue:photo forKey:@"photo"];
+                [info setValue:model.isBurned==true?@"true":@"false" forKey:@"isBurned"];
                 if (info)  [infoArr replaceObjectAtIndex:i withObject:info];
                 [assets replaceObjectAtIndex:i withObject:model.asset];
                 
@@ -487,6 +488,8 @@ static CGFloat itemMargin = 5;
     cell.allowPickingMultipleVideo = tzImagePickerVc.allowPickingMultipleVideo;
     cell.photoDefImage = tzImagePickerVc.photoDefImage;
     cell.photoSelImage = tzImagePickerVc.photoSelImage;
+    cell.burnDefImage = tzImagePickerVc.burnDefImage;
+    cell.burnSelImage = tzImagePickerVc.burnSelImage;
     cell.useCachedImage = self.useCachedImage;
     cell.assetCellDidSetModelBlock = tzImagePickerVc.assetCellDidSetModelBlock;
     cell.assetCellDidLayoutSubviewsBlock = tzImagePickerVc.assetCellDidLayoutSubviewsBlock;
@@ -546,9 +549,17 @@ static CGFloat itemMargin = 5;
                 }
                 strongCell.selectPhotoButton.selected = YES;
                 model.isSelected = YES;
+                model.isBurned = model.isBurned;
+                NSArray *selectedModels = [NSArray arrayWithArray:tzImagePickerVc.selectedModels];
                 if (tzImagePickerVc.showSelectedIndex || tzImagePickerVc.showPhotoCannotSelectLayer) {
                     model.needOscillatoryAnimation = YES;
                     [strongSelf setUseCachedImageAndReloadData];
+                }
+                for (TZAssetModel *model_item in selectedModels) {
+                    if ([model.asset.localIdentifier isEqualToString:model_item.asset.localIdentifier]) {
+                        [tzImagePickerVc removeSelectedModel:model_item];
+                        break;
+                    }
                 }
                 [tzImagePickerVc addSelectedModel:model];
                 [strongSelf refreshBottomToolBarStatus];
@@ -556,6 +567,29 @@ static CGFloat itemMargin = 5;
             } else {
                 NSString *title = [NSString stringWithFormat:[NSBundle tz_localizedStringForKey:@"Select a maximum of %zd photos"], tzImagePickerVc.maxImagesCount];
                 [tzImagePickerVc showAlertWithTitle:title];
+            }
+        }
+    };
+    cell.didBurnedPhotoBlock = ^(BOOL isSelected) {
+        __strong typeof(weakCell) strongCell = weakCell;
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)strongSelf.navigationController;
+        // 1. cancel select / 取消选择
+        strongCell.burnReadingButton.selected = !isSelected;
+        NSArray *selectedModels = [NSArray arrayWithArray:tzImagePickerVc.selectedModels];
+        if(model.isSelected){
+            for (TZAssetModel *model_item in selectedModels) {
+                if ([model.asset.localIdentifier isEqualToString:model_item.asset.localIdentifier]) {
+                    model_item.isBurned = !isSelected;
+                    break;
+                }
+            }
+        }else{
+            for (TZAssetModel *model_item in _models) {
+                if ([model.asset.localIdentifier isEqualToString:model_item.asset.localIdentifier]) {
+                    model_item.isBurned = !isSelected;
+                    break;
+                }
             }
         }
     };
@@ -670,6 +704,7 @@ static CGFloat itemMargin = 5;
             self.imagePickerVc.videoMaximumDuration = tzImagePickerVc.videoMaximumDuration;
         }
         self.imagePickerVc.mediaTypes= mediaTypes;
+        _imagePickerVc.modalPresentationStyle = UIModalPresentationOverCurrentContext;
         if (tzImagePickerVc.uiImagePickerControllerSettingBlock) {
             tzImagePickerVc.uiImagePickerControllerSettingBlock(_imagePickerVc);
         }

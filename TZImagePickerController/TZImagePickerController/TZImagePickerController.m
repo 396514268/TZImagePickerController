@@ -211,6 +211,7 @@
     if (self) {
         self.selectedAssets = [NSMutableArray arrayWithArray:selectedAssets];
         self.allowPickingOriginalPhoto = self.allowPickingOriginalPhoto;
+        self.allowPickingBurnPhoto = self.allowPickingBurnPhoto;
         [self configDefaultSetting];
         
         previewVc.photos = [NSMutableArray arrayWithArray:selectedPhotos];
@@ -282,6 +283,8 @@
     self.takePictureImageName = @"takePicture80";
     self.photoSelImageName = @"photo_sel_photoPickerVc";
     self.photoDefImageName = @"photo_def_photoPickerVc";
+    self.burnSelImageName = @"photo_sel_photoPickerVc";
+    self.burnDefImageName = @"photo_def_photoPickerVc";
     self.photoNumberIconImage = [self createImageWithColor:nil size:CGSizeMake(24, 24) radius:12]; // @"photo_number_icon";
     self.photoPreviewOriginDefImageName = @"preview_original_def";
     self.photoOriginDefImageName = @"photo_original_def";
@@ -301,6 +304,16 @@
 - (void)setPhotoDefImageName:(NSString *)photoDefImageName {
     _photoDefImageName = photoDefImageName;
     _photoDefImage = [UIImage imageNamedFromMyBundle:photoDefImageName];
+}
+
+- (void)setBurnSelImageName:(NSString *)burnSelImageName {
+    _burnSelImageName = burnSelImageName;
+    _burnSelImage = [UIImage imageNamedFromMyBundle:burnSelImageName];
+}
+
+- (void)setBurnDefImageName:(NSString *)burnDefImageName {
+    _burnDefImageName = burnDefImageName;
+    _burnDefImage = [UIImage imageNamedFromMyBundle:burnDefImageName];
 }
 
 - (void)setPhotoNumberIconImageName:(NSString *)photoNumberIconImageName {
@@ -333,6 +346,7 @@
     self.cancelBtnTitleStr = [NSBundle tz_localizedStringForKey:@"Cancel"];
     self.previewBtnTitleStr = [NSBundle tz_localizedStringForKey:@"Preview"];
     self.fullImageBtnTitleStr = [NSBundle tz_localizedStringForKey:@"Full image"];
+    self.burnImageBtnTitleStr = [NSBundle tz_localizedStringForKey:@"Burn image"];
     self.settingBtnTitleStr = [NSBundle tz_localizedStringForKey:@"Setting"];
     self.processHintStr = [NSBundle tz_localizedStringForKey:@"Processing..."];
 }
@@ -341,6 +355,7 @@
     _showSelectedIndex = showSelectedIndex;
     if (showSelectedIndex) {
         self.photoSelImage = [self createImageWithColor:nil size:CGSizeMake(24, 24) radius:12];
+        self.burnSelImage = [self createImageWithColor:nil size:CGSizeMake(24, 24) radius:12];
     }
     [TZImagePickerConfig sharedInstance].showSelectedIndex = showSelectedIndex;
 }
@@ -613,6 +628,17 @@
 - (void)removeSelectedModel:(TZAssetModel *)model {
     [_selectedModels removeObject:model];
     [_selectedAssetIds removeObject:model.asset.localIdentifier];
+}
+
+- (void)updateSelectedModel:(TZAssetModel *)model {
+    for (int i = 0; i < _selectedModels.count; i ++) {
+        TZAssetModel *model_item = _selectedModels[i];
+        if ([model.asset.localIdentifier isEqualToString:model_item.asset.localIdentifier]) {
+            [_selectedModels removeObjectAtIndex:i];
+        }
+    }
+    [_selectedModels addObject:model];
+    [_selectedAssetIds addObject:model.asset.localIdentifier];
 }
 
 - (UIImage *)createImageWithColor:(UIColor *)color size:(CGSize)size radius:(CGFloat)radius {

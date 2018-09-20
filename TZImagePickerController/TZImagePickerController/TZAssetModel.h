@@ -22,6 +22,7 @@ typedef enum : NSUInteger {
 
 @property (nonatomic, strong) PHAsset *asset;
 @property (nonatomic, assign) BOOL isSelected;      ///< The select status of a photo, default is No
+@property (nonatomic, assign) BOOL isBurned;        ///< The photo is burn reading, default is NO
 @property (nonatomic, assign) TZAssetModelMediaType type;
 @property (assign, nonatomic) BOOL needOscillatoryAnimation;
 @property (nonatomic, copy) NSString *timeLength;

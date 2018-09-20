@@ -16,6 +16,7 @@
 @interface TZAssetCell ()
 @property (weak, nonatomic) UIImageView *imageView;       // The photo / 照片
 @property (weak, nonatomic) UIImageView *selectImageView;
+@property (weak, nonatomic) UIImageView *burnImageView;
 @property (weak, nonatomic) UILabel *indexLabel;
 @property (weak, nonatomic) UIView *bottomView;
 @property (weak, nonatomic) UILabel *timeLength;
@@ -56,7 +57,9 @@
         self.imageRequestID = imageRequestID;
     }
     self.selectPhotoButton.selected = model.isSelected;
+    self.burnReadingButton.selected = model.isBurned;
     self.selectImageView.image = self.selectPhotoButton.isSelected ? self.photoSelImage : self.photoDefImage;
+    self.burnImageView.image = self.burnReadingButton.isSelected ? self.burnSelImage : self.burnDefImage;
     self.indexLabel.hidden = !self.selectPhotoButton.isSelected;
     
     self.type = (NSInteger)model.type;
@@ -65,6 +68,10 @@
         if (_selectImageView.hidden == NO) {
             self.selectPhotoButton.hidden = YES;
             _selectImageView.hidden = YES;
+        }
+        if(_burnImageView.hidden == NO) {
+            self.burnReadingButton.hidden = YES;
+            _burnImageView.hidden = YES;
         }
     }
     // 如果用户选中了该图片，提前获取一下大图
@@ -80,7 +87,7 @@
     [self setNeedsLayout];
     
     if (self.assetCellDidSetModelBlock) {
-        self.assetCellDidSetModelBlock(self, _imageView, _selectImageView, _indexLabel, _bottomView, _timeLength, _videoImgView);
+        self.assetCellDidSetModelBlock(self, _imageView, _selectImageView, _burnImageView, _indexLabel, _bottomView, _timeLength, _videoImgView);
     }
 }
 
@@ -154,6 +161,13 @@
     }
 }
 
+- (void)burnReadingButtonClick:(UIButton *)sender {
+    if (self.didBurnedPhotoBlock) {
+        self.didBurnedPhotoBlock(sender.isSelected);
+    }
+    self.burnImageView.image = sender.isSelected ? self.burnSelImage : self.burnDefImage;
+}
+
 /// 只在单选状态且allowPreview为NO时会有该事件
 - (void)didTapImageView {
     if (self.didSelectPhotoBlock) {
@@ -211,6 +225,16 @@
     return _selectPhotoButton;
 }
 
+- (UIButton *)burnReadingButton {
+    if (_burnReadingButton == nil) {
+        UIButton *burnReadingButton = [[UIButton alloc] init];
+        [burnReadingButton addTarget:self action:@selector(burnReadingButtonClick:) forControlEvents:UIControlEventTouchUpInside];
+        [self.contentView addSubview:burnReadingButton];
+        _burnReadingButton = burnReadingButton;
+    }
+    return _burnReadingButton;
+}
+
 - (UIImageView *)imageView {
     if (_imageView == nil) {
         UIImageView *imageView = [[UIImageView alloc] init];
@@ -234,6 +258,17 @@
         _selectImageView = selectImageView;
     }
     return _selectImageView;
+}
+
+- (UIImageView *)burnImageView {
+    if (_burnImageView == nil) {
+        UIImageView *burnImageView = [[UIImageView alloc] init];
+        burnImageView.contentMode = UIViewContentModeCenter;
+        burnImageView.clipsToBounds = YES;
+        [self.contentView addSubview:burnImageView];
+        _burnImageView = burnImageView;
+    }
+    return _burnImageView;
 }
 
 - (UIView *)bottomView {
@@ -304,14 +339,22 @@
     _cannotSelectLayerButton.frame = self.bounds;
     if (self.allowPreview) {
         _selectPhotoButton.frame = CGRectMake(self.tz_width - 44, 0, 44, 44);
+        _burnReadingButton.frame = CGRectMake(self.tz_width - 44, self.tz_height-44, 44, 44);
     } else {
         _selectPhotoButton.frame = self.bounds;
+        _burnReadingButton.frame = self.bounds;
     }
     _selectImageView.frame = CGRectMake(self.tz_width - 27, 3, 24, 24);
+    _burnImageView.frame = CGRectMake(self.tz_width - 27, self.tz_height-27, 24, 24);
     if (_selectImageView.image.size.width <= 27) {
         _selectImageView.contentMode = UIViewContentModeCenter;
     } else {
         _selectImageView.contentMode = UIViewContentModeScaleAspectFit;
+    }
+    if (_burnImageView.image.size.width <= 27) {
+        _burnImageView.contentMode = UIViewContentModeCenter;
+    } else {
+        _burnImageView.contentMode = UIViewContentModeScaleAspectFit;
     }
     _indexLabel.frame = _selectImageView.frame;
     _imageView.frame = CGRectMake(0, 0, self.tz_width, self.tz_height);
@@ -330,11 +373,13 @@
     [self.contentView bringSubviewToFront:_bottomView];
     [self.contentView bringSubviewToFront:_cannotSelectLayerButton];
     [self.contentView bringSubviewToFront:_selectPhotoButton];
+    [self.contentView bringSubviewToFront:_burnReadingButton];
     [self.contentView bringSubviewToFront:_selectImageView];
+    [self.contentView bringSubviewToFront:_burnImageView];
     [self.contentView bringSubviewToFront:_indexLabel];
     
     if (self.assetCellDidLayoutSubviewsBlock) {
-        self.assetCellDidLayoutSubviewsBlock(self, _imageView, _selectImageView, _indexLabel, _bottomView, _timeLength, _videoImgView);
+        self.assetCellDidLayoutSubviewsBlock(self, _imageView, _selectImageView, _burnImageView, _indexLabel, _bottomView, _timeLength, _videoImgView);
     }
 }
 

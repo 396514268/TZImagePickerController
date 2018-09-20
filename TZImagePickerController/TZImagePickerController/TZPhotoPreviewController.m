@@ -31,6 +31,7 @@
     UILabel *_numberLabel;
     UIButton *_originalPhotoButton;
     UILabel *_originalPhotoLabel;
+    UIButton *_burnPhotoButton;
     
     CGFloat _offsetItemCount;
     
@@ -133,7 +134,7 @@
     _toolBar.backgroundColor = [UIColor colorWithRed:rgb green:rgb blue:rgb alpha:0.7];
     
     TZImagePickerController *_tzImagePickerVc = (TZImagePickerController *)self.navigationController;
-    if (_tzImagePickerVc.allowPickingOriginalPhoto) {
+    if (_tzImagePickerVc.allowPickingOriginalPhoto && !_tzImagePickerVc.allowPickingBurnPhoto) {
         _originalPhotoButton = [UIButton buttonWithType:UIButtonTypeCustom];
         _originalPhotoButton.imageEdgeInsets = UIEdgeInsetsMake(0, -10, 0, 0);
         _originalPhotoButton.backgroundColor = [UIColor clearColor];
@@ -152,6 +153,19 @@
         _originalPhotoLabel.textColor = [UIColor whiteColor];
         _originalPhotoLabel.backgroundColor = [UIColor clearColor];
         if (_isSelectOriginalPhoto) [self showPhotoBytes];
+    }
+    if(_tzImagePickerVc.allowPickingBurnPhoto) {
+        _burnPhotoButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        _burnPhotoButton.imageEdgeInsets = UIEdgeInsetsMake(0, -10, 0, 0);
+        _burnPhotoButton.backgroundColor = [UIColor clearColor];
+        [_burnPhotoButton addTarget:self action:@selector(burnPhotoButtonClick) forControlEvents:UIControlEventTouchUpInside];
+        _burnPhotoButton.titleLabel.font = [UIFont systemFontOfSize:13];
+        [_burnPhotoButton setTitle:@"阅后即焚" forState:UIControlStateNormal];
+        [_burnPhotoButton setTitle:@"阅后即焚" forState:UIControlStateSelected];
+        [_burnPhotoButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
+        [_burnPhotoButton setTitleColor:[UIColor whiteColor] forState:UIControlStateSelected];
+        [_burnPhotoButton setImage:_tzImagePickerVc.photoPreviewOriginDefImage forState:UIControlStateNormal];
+        [_burnPhotoButton setImage:_tzImagePickerVc.photoOriginSelImage forState:UIControlStateSelected];
     }
     
     _doneButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -177,12 +191,13 @@
     [_originalPhotoButton addSubview:_originalPhotoLabel];
     [_toolBar addSubview:_doneButton];
     [_toolBar addSubview:_originalPhotoButton];
+    [_toolBar addSubview:_burnPhotoButton];
     [_toolBar addSubview:_numberImageView];
     [_toolBar addSubview:_numberLabel];
     [self.view addSubview:_toolBar];
     
     if (_tzImagePickerVc.photoPreviewPageUIConfigBlock) {
-        _tzImagePickerVc.photoPreviewPageUIConfigBlock(_collectionView, _naviBar, _backButton, _selectButton, _indexLabel, _toolBar, _originalPhotoButton, _originalPhotoLabel, _doneButton, _numberImageView, _numberLabel);
+        _tzImagePickerVc.photoPreviewPageUIConfigBlock(_collectionView, _naviBar, _backButton, _selectButton, _burnPhotoButton, _indexLabel, _toolBar, _originalPhotoButton, _originalPhotoLabel, _doneButton, _numberImageView, _numberLabel);
     }
 }
 
@@ -267,10 +282,14 @@
     CGFloat toolBarHeight = [TZCommonTools tz_isIPhoneX] ? 44 + (83 - 49) : 44;
     CGFloat toolBarTop = self.view.tz_height - toolBarHeight;
     _toolBar.frame = CGRectMake(0, toolBarTop, self.view.tz_width, toolBarHeight);
-    if (_tzImagePickerVc.allowPickingOriginalPhoto) {
+    if (_tzImagePickerVc.allowPickingOriginalPhoto && !_tzImagePickerVc.allowPickingBurnPhoto) {
         CGFloat fullImageWidth = [_tzImagePickerVc.fullImageBtnTitleStr boundingRectWithSize:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX) options:NSStringDrawingUsesFontLeading attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:13]} context:nil].size.width;
         _originalPhotoButton.frame = CGRectMake(0, 0, fullImageWidth + 56, 44);
         _originalPhotoLabel.frame = CGRectMake(fullImageWidth + 42, 0, 80, 44);
+    }
+    if(_tzImagePickerVc.allowPickingBurnPhoto) {
+        CGFloat fullImageWidth = [@"阅后即焚" boundingRectWithSize:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX) options:NSStringDrawingUsesFontLeading attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:13]} context:nil].size.width;
+        _burnPhotoButton.frame = CGRectMake(0, 0, fullImageWidth + 56, 44);
     }
     [_doneButton sizeToFit];
     _doneButton.frame = CGRectMake(self.view.tz_width - _doneButton.tz_width - 12, 0, _doneButton.tz_width, 44);
@@ -303,6 +322,7 @@
             return;
             // 2. if not over the maxImagesCount / 如果没有超过最大个数限制
         } else {
+            model.isBurned = _burnPhotoButton.isSelected;
             [_tzImagePickerVc addSelectedModel:model];
             if (self.photos) {
                 [_tzImagePickerVc.selectedAssets addObject:_assetsTemp[_currentIndex]];
@@ -420,6 +440,35 @@
     }
 }
 
+- (void)burnPhotoButtonClick {
+    TZImagePickerController *_tzImagePickerVc = (TZImagePickerController *)self.navigationController;
+    _burnPhotoButton.selected = !_burnPhotoButton.isSelected;
+    if (_burnPhotoButton.selected) {
+        if (!_selectButton.isSelected) {
+            // 如果当前已选择照片张数 < 最大可选张数 && 最大可选张数大于1，就选中该张图
+            TZImagePickerController *_tzImagePickerVc = (TZImagePickerController *)self.navigationController;
+            if (_tzImagePickerVc.selectedModels.count < _tzImagePickerVc.maxImagesCount && _tzImagePickerVc.showSelectBtn) {
+                [self select:_selectButton];
+            }else{
+                TZAssetModel *model = _models[_currentIndex];
+                model.isBurned = _burnPhotoButton.selected;
+                _models[_currentIndex] = model;
+                [_tzImagePickerVc updateSelectedModel:model];
+            }
+        }else{
+            TZAssetModel *model = _models[_currentIndex];
+            model.isBurned = _burnPhotoButton.selected;
+            _models[_currentIndex] = model;
+            [_tzImagePickerVc updateSelectedModel:model];
+        }
+    }else {
+        TZAssetModel *model = _models[_currentIndex];
+        model.isBurned = _burnPhotoButton.selected;
+        _models[_currentIndex] = model;
+        [_tzImagePickerVc updateSelectedModel:model];
+    }
+}
+
 - (void)didTapPreviewCell {
     self.isHideNaviBar = !self.isHideNaviBar;
     _naviBar.hidden = self.isHideNaviBar;
@@ -515,6 +564,7 @@
     TZImagePickerController *_tzImagePickerVc = (TZImagePickerController *)self.navigationController;
     TZAssetModel *model = _models[_currentIndex];
     _selectButton.selected = model.isSelected;
+    _burnPhotoButton.selected = model.isBurned;
     [self refreshSelectButtonImageViewContentMode];
     if (_selectButton.isSelected && _tzImagePickerVc.showSelectedIndex && _tzImagePickerVc.showSelectBtn) {
         NSString *index = [NSString stringWithFormat:@"%zd", [_tzImagePickerVc.selectedAssetIds indexOfObject:model.asset.localIdentifier] + 1];
