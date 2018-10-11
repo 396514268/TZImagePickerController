@@ -108,6 +108,16 @@
     }
 }
 
+- (void)setShowBurnBtn:(BOOL)showBurnBtn {
+    _showBurnBtn = showBurnBtn;
+    if (!self.burnReadingButton.hidden) {
+        self.burnReadingButton.hidden = !showBurnBtn;
+    }
+    if (!self.burnImageView.hidden) {
+        self.burnImageView.hidden = !showBurnBtn;
+    }
+}
+
 - (void)setType:(TZAssetCellType)type {
     _type = type;
     if (type == TZAssetCellTypePhoto || type == TZAssetCellTypeLivePhoto || (type == TZAssetCellTypePhotoGif && !self.allowPickingGif) || self.allowPickingMultipleVideo) {

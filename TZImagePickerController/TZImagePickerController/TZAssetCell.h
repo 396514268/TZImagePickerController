@@ -39,6 +39,7 @@ typedef enum : NSUInteger {
 @property (nonatomic, strong) UIImage *burnDefImage;
 
 @property (nonatomic, assign) BOOL showSelectBtn;
+@property (nonatomic, assign) BOOL showBurnBtn;
 @property (assign, nonatomic) BOOL allowPreview;
 @property (assign, nonatomic) BOOL useCachedImage;
 

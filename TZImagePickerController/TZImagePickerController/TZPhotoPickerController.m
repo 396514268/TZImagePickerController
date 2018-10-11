@@ -505,6 +505,7 @@ static CGFloat itemMargin = 5;
         cell.index = [tzImagePickerVc.selectedAssetIds indexOfObject:model.asset.localIdentifier] + 1;
     }
     cell.showSelectBtn = tzImagePickerVc.showSelectBtn;
+    cell.showBurnBtn = tzImagePickerVc.allowPickingBurnPhoto;
     cell.allowPreview = tzImagePickerVc.allowPreview;
     
     if (tzImagePickerVc.selectedModels.count >= tzImagePickerVc.maxImagesCount && tzImagePickerVc.showPhotoCannotSelectLayer && !model.isSelected) {
@@ -585,15 +586,12 @@ static CGFloat itemMargin = 5;
                 }
             }
         }else{
-            if (tzImagePickerVc.maxImagesCount == 1 && !tzImagePickerVc.allowPreview) {
-                model.isSelected = NO;
-                [tzImagePickerVc addSelectedModel:model];
-                [strongSelf doneButtonClick];
-                return;
+            for (TZAssetModel *model_item in _models) {
+                if ([model.asset.localIdentifier isEqualToString:model_item.asset.localIdentifier]) {
+                    model_item.isBurned = !isSelected;
+                    break;
+                }
             }
-            model.isSelected = NO;
-            model.isBurned = !isSelected;
-            [tzImagePickerVc addSelectedModel:model];
         }
     };
     return cell;
