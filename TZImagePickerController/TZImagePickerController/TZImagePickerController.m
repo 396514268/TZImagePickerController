@@ -283,8 +283,8 @@
     self.takePictureImageName = @"takePicture80";
     self.photoSelImageName = @"photo_sel_photoPickerVc";
     self.photoDefImageName = @"photo_def_photoPickerVc";
-    self.burnSelImageName = @"photo_sel_photoPickerVc";
-    self.burnDefImageName = @"photo_def_photoPickerVc";
+    self.burnSelImageName = @"burn_checked";
+    self.burnDefImageName = @"burn_uncheck";
     self.photoNumberIconImage = [self createImageWithColor:nil size:CGSizeMake(24, 24) radius:12]; // @"photo_number_icon";
     self.photoPreviewOriginDefImageName = @"preview_original_def";
     self.photoOriginDefImageName = @"photo_original_def";
